@@ -1,0 +1,23 @@
+# Background Generator Configuration
+
+[image]
+path = "img/sample.jpg"      # Path to the input image
+scale_percent = 70           # Scale the image to this percentage of its max allowed size
+
+[output]
+path = "None"                # Output file path. None for auto naming.
+width = 3840                 # Width of output image in pixels
+height = 2160                # Height of output image in pixels
+
+[background]
+color = "#EFE4D2"   # Background color in hex format. 'None' for dominant color.
+
+[noise]
+type = "perlin"     # Options: "perlin", "value", "white", "gaussian", "simplex"
+intensity = 0.02    # Noise intensity (0.0-1.0)
+scale = 100         # Noise scale (higher = larger patterns)
+seed = 42           # Random seed for reproducible results (optional)
+
+[border]
+width = 5           # Border width in pixels (0 for no border)
+color = "#fcba03"   # Border color in hex format
