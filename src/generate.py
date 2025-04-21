@@ -8,7 +8,8 @@ from .noise import (
     generate_value_noise,
     generate_white_noise,
     generate_voronoi_noise,
-    generate_colored_voronoi
+    generate_colored_voronoi,
+    generate_gaussian_noise
 )
 try:
     from .post_process import (
