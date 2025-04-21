@@ -4,7 +4,7 @@ import numpy as np
 import argparse
 import tomllib
 
-from src import generate_desktop_background
+from src import generate_desktop_background, post_process
 
 
 def load_config(config_path):
@@ -69,13 +69,19 @@ def main():
 
     image_scale_percent = config.get("image", {}).get("scale_percent")
 
+    post = config.get("post", {}).get("post")
+    post_effect = config.get("post", {}).get("effect")
+    vignette = config.get("post", {}).get("vignette")
+    vig_intensity = config.get("post", {}).get("vig_intensity")
+    vig_opacity = config.get("post", {}).get("vig_opacity")
+
     # Output path
     output_path = config.get("output", {}).get("path")
     if output_path and output_path.lower() == "none":
         base_name = os.path.splitext(os.path.basename(image_path))[0]
         output_path = f"output/{base_name}_{noise_type}_bg.png"
 
-    success = generate_desktop_background(
+    background_img = generate_desktop_background(
         image_path,
         bg_color,
         output_path,
@@ -89,8 +95,27 @@ def main():
         height=height,
         image_scale_percent=image_scale_percent,
     )
+    
+    if post:
+        background_img = post_process(
+            background_img,
+            post_effect=post_effect,
+            vignette=vignette,
+            vig_intensity=vig_intensity,
+            vig_opacity=vig_opacity,
+        )
 
-    return 0 if success else 1
+    # Save the final image
+    try:
+        background_img.save(output_path)
+        print(f"Background saved to {output_path}")
+        return True
+    except Exception as e:
+        print(f"Error saving image: {e}")
+        return False
+
+
+    return 1
 
 
 if __name__ == "__main__":

@@ -7,7 +7,21 @@ from .noise import (
     generate_simplex_noise,
     generate_value_noise,
     generate_white_noise,
+    generate_voronoi_noise,
+    generate_colored_voronoi
 )
+try:
+    from .post_process import (
+        apply_painterly_effect,
+        apply_watercolor_effect,
+        apply_oil_painting_effect,
+        apply_vignette,
+        apply_advanced_vignette
+    )
+except:
+    print("[WARNING] Post-processing is not available.")
+
+
 from .utils import hex_to_rgb, get_dominant_color
 
 
@@ -52,6 +66,10 @@ def generate_desktop_background(
         noise = generate_value_noise(
             (height, width), scale=noise_scale, seed=noise_seed
         )
+    elif noise_type == "simplex":
+        noise = generate_simplex_noise(
+            (height, width), scale=noise_scale, seed=noise_seed
+        )
     elif noise_type == "white":
         noise = generate_white_noise(
             (height, width), intensity=intensity, seed=noise_seed
@@ -63,23 +81,28 @@ def generate_desktop_background(
             sigma=noise_scale / 25,
             seed=noise_seed,
         )
-    elif noise_type == "simplex":
-        noise = generate_simplex_noise(
-            (height, width), scale=noise_scale, seed=noise_seed
+    elif noise_type == "voronoi":
+        if not isinstance(intensity, int):
+            raise ValueError("intensity for the voronoi is the number of edges. Use integer values.")
+        noise = generate_voronoi_noise(
+            (height, width), intensity=intensity, seed=noise_seed
         )
+    elif noise_type == "None":
+        pass
     else:
         raise ValueError(f"Unknown noise type: {noise_type}")
 
-    # Apply noise to each color channel
-    for c in range(3):
-        # Convert to float for calculations
-        channel = background[:, :, c].astype(float)
+    if noise_type != "None":
+        # Apply noise to each color channel
+        for c in range(3):
+            # Convert to float for calculations
+            channel = background[:, :, c].astype(float)
 
-        # Apply noise with intensity
-        modified = channel * (1.0 - intensity + noise * intensity * 2)
+            # Apply noise with intensity
+            modified = channel * (1.0 - intensity + noise * intensity * 2)
 
-        # Clip values to valid range and convert back to uint8
-        background[:, :, c] = np.clip(modified, 0, 255).astype(np.uint8)
+            # Clip values to valid range and convert back to uint8
+            background[:, :, c] = np.clip(modified, 0, 255).astype(np.uint8)
 
     # Convert to PIL Image
     background_img = Image.fromarray(background)
@@ -148,11 +171,27 @@ def generate_desktop_background(
         print(f"Error processing poster image: {e}")
         return False
 
-    # Save the final image
-    try:
-        background_img.save(output_path)
-        print(f"Background saved to {output_path}")
-        return True
-    except Exception as e:
-        print(f"Error saving image: {e}")
-        return False
+    return background_img
+
+def post_process(
+    background_img,
+    post_effect="None",
+    vignette=False,
+    vig_intensity=0.5,
+    vig_opacity=0.5,
+):
+    if post_effect == "water":
+        background_img=apply_watercolor_effect(background_img)
+    elif post_effect == "oil":
+        background_img=apply_oil_painting_effect(background_img)
+    elif post_effect == "painterly":
+        background_img=apply_painterly_effect(background_img)
+    elif post_effect == "None":
+        pass
+    else:
+        raise ValueError(f"Post processes effect is set {post_effect}, should be one of the following: water, oily, painterly")
+
+    if vignette:
+        background_img=apply_advanced_vignette(background_img, intensity=vig_intensity, opacity=vig_opacity)
+
+    return background_img
